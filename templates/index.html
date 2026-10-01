@@ -20,6 +20,15 @@
   <div id="status"></div>
 </div>
 
+
+
+<button id="authBtn">Sign in with Google</button>
+<script>
+document.getElementById('authBtn').onclick = () => {
+  window.location.href = '/authorize';
+};
+</script>
+
 <script>
 const startBtn = document.getElementById('startBtn');
 const video = document.getElementById('video');
