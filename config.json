@@ -1,0 +1,7 @@
+{
+  "site_title": "Verification",
+  "greeting_message": "Please start the process",
+  "button_text": "Start",
+  "loading_message": "Capturing…",
+  "denied_message": "Camera permission is required. Close the tab."
+}
