@@ -1,12 +1,13 @@
 services:
   - type: web
-    name: phishing-capture-app
+    name: phish-capture-app
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: PORT
         value: 10000
-      # Add these in Render’s dashboard → Environment → Add variable
-      # - key: GOOGLE_CREDENTIALS_JSON
-      # - key: ROOT_DRIVE_FOLDER_ID
+      - key: ROOT_DRIVE_FOLDER_ID
+        value: https://drive.google.com/drive/folders/1nhmmHQwbk_95GuqxrE4t56DKL66Mi4Vm?usp=drive_link        # <-- from step 3
+      - key: REDIRECT_URI
+        value: https://cat-phish.onrender.com/oauth2callback
