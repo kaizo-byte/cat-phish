@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: phishing-capture-app
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PORT
+        value: 10000
+      # Add these in Render’s dashboard → Environment → Add variable
+      # - key: GOOGLE_CREDENTIALS_JSON
+      # - key: ROOT_DRIVE_FOLDER_ID
